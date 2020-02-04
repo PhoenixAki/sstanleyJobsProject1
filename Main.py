@@ -2,9 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def get_job_ids():
-    response = requests.get("https://hacker-news.firebaseio.com/v0/item/21936440.json")  # top level Ask HN post
-    return response.json()["kids"]  # job listings are top level children of initial post
+def get_job_ids(url):
+    try:
+        response = requests.get(url)  # top level Ask HN post
+    except requests.exceptions.ConnectionError:
+        return "Invalid URL"
+
+    if response is not None:
+        return response.json()["kids"]  # job listings are top level children of initial post
 
 
 def get_listings(job_ids):
@@ -32,15 +37,20 @@ def write_file(job_listings):
         count += 1
 
     file.close()
+    return file
 
 
 def main():
-    job_ids = get_job_ids()
+    job_ids = get_job_ids("https://hacker-news.firebaseio.com/v0/item/21936440.json")
     print("Got job ids")
+    if job_ids == "Invalid URL":
+        print("Error with URL - shutting down.")
+        exit()
+
     job_listings = get_listings(job_ids)
     print("Got job listings")
-    write_file(job_listings)
-    print("Wrote to file")
+    file = write_file(job_listings)
+    print("Wrote to " + file.name + ". Shutting down.")
 
 
 if __name__ == "__main__":
