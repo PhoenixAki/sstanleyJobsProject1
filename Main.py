@@ -175,7 +175,7 @@ def main():
 
     response = write_db(cursor, "jobs(id, title, location, skills, visa, onsite, website, description) "
                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?)", job_listings, "")
-    if response is not "Error":
+    if response != "Error":
         print("Wrote to database. Shutting down.")
     else:
         print("Error writing to database. Shutting down.")
