@@ -92,44 +92,19 @@ def parse_listings(job_listings: list, cities: list):
                 continue
 
             # location
-            if checks[1] is False:
-                for city in cities:
-                    if city in part.lower():
-                        checks[1] = True
-                        data[2] = part
-                        continue
-
-            # skills
-            if checks[2] is False and "skills" in part.lower():
-                checks[2] = True
-                data[3] = part
+            if check_city(checks, data, part, cities):
                 continue
 
-            # visa
-            if checks[3] is False and "visa" in part.lower():
-                checks[3] = True
-                data[4] = "Yes"
+            if check_job(checks, 2, data, "skills", part, part):
                 continue
 
-            # remote/onsite info
-            if checks[4] is False:
-                if "remote" in part.lower() and "onsite" in part.lower():
-                    data[5] = "Remote and Onsite"
-                    checks[4] = True
-                    continue
-                elif "remote" in part.lower():
-                    data[5] = "Remote"
-                    checks[4] = True
-                    continue
-                elif "onsite" in part.lower():
-                    data[5] = "Onsite"
-                    checks[4] = True
-                    continue
+            if check_job(checks, 3, data, "visa", "Yes", part):
+                continue
 
-            # website
-            if checks[5] is False and "http" in part.lower():
-                checks[5] = True
-                data[6] = part
+            if check_remote(checks, data, part):
+                continue
+
+            if check_job(checks, 5, data, "http", part, part):
                 continue
 
         parsed.append(data)
@@ -137,15 +112,47 @@ def parse_listings(job_listings: list, cities: list):
     return parsed
 
 
-def write_db(cursor: sqlite3.Cursor, table: str, values: list, replace: str):
-        try:
-            for value in values:
-                cursor.execute("INSERT" + replace + " INTO " + table + ";", value)
-        except Exception as e:
-            print("Exception: " + str(e))
-            return "Error"
+def check_city(checks: list, data: list, part: str, cities: list):
+    if checks[1] is False:
+        for city in cities:
+            if city in part.lower():
+                checks[1] = True
+                data[2] = part
+                return True
 
-        return "Success"
+
+def check_job(checks: list, num: int, data: list, check_value: str, add_value: str, part: str):
+    if checks[num] is False and check_value in part.lower():
+        checks[num] = True
+        data[num+1] = add_value
+        return True
+
+
+def check_remote(checks: list, data: list, part: str):
+    if checks[4] is False:
+        if "remote" in part.lower() and "onsite" in part.lower():
+            data[5] = "Remote and Onsite"
+            checks[4] = True
+            return True
+        elif "remote" in part.lower():
+            data[5] = "Remote"
+            checks[4] = True
+            return True
+        elif "onsite" in part.lower():
+            data[5] = "Onsite"
+            checks[4] = True
+            return True
+
+
+def write_db(cursor: sqlite3.Cursor, table: str, values: list, replace: str):
+    try:
+        for value in values:
+            cursor.execute("INSERT" + replace + " INTO " + table + ";", value)
+    except Exception as e:
+        print("Exception: " + str(e))
+        return "Error"
+
+    return "Success"
 
 
 def main():
