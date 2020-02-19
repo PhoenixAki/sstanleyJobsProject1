@@ -3,9 +3,9 @@ import Main
 
 def test_get_jobs_ids():
     # ensures that a valid URL returns the IDs of job posts, and bad URL does not attempt to pull them
-    good_result = Main.request_comment("https://hacker-news.firebaseio.com/v0/item/21936440.json", "kids")
-    bad_result = Main.request_comment("http://obviously-bad-url-for-testing.json", "kids")
-    assert len(good_result) > 100
+    good_result = Main.request_comment("https://hacker-news.firebaseio.com/v0/item/", [21936440], "kids")
+    bad_result = Main.request_comment("http://obviously-bad-url-for-testing.json", [12345], "kids")
+    assert len(good_result[0]) > 100
     assert bad_result == "Invalid URL"
 
 
