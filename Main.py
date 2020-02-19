@@ -46,22 +46,16 @@ def request_comment(url: str, ids: list, tag: str):
     """Makes a request to the API for specific comments, and attempts to pull a tag out. This is generalized to allow
     for either 'kids' or 'text' to be pulled. In the case of deleted comments and there is no 'text' value, exceptions
     handle what to do with them."""
-    posts = []
     responses = list()
     try:
         for post_id in ids:
-            posts.append(requests.get(url + str(post_id) + ".json"))  # top level Ask HN posts
-
-        try:
-            for post in posts:
-                if tag == "text":
-                    responses.append([post.json()["time"], post.json()[tag]])
-                elif tag == "kids":
-                    responses.append(post.json()[tag])
-        except (TypeError, KeyError):
-            return "Null Response or Invalid Key"
-    except requests.exceptions.ConnectionError:
-        return "Invalid URL"
+            post = requests.get(url + str(post_id) + ".json")  # top level Ask HN posts
+            if tag == "text":
+                responses.append([post.json()["time"], post.json()[tag]])
+            elif tag == "kids":
+                responses.append(post.json()[tag])
+    except (requests.exceptions.ConnectionError, TypeError, KeyError):
+        return "Error retrieving comment or its data."
 
     if tag == "text":
         return responses[0]
@@ -99,7 +93,7 @@ def get_listings(job_ids: list):
         for job_id in month:
             listing = request_comment("https://hacker-news.firebaseio.com/v0/item/", [job_id], "text")
             job_count += 1
-            if listing == "Null Response or Invalid Key":
+            if listing == "Error retrieving comment or its data.":
                 print("Skipped invalid comment in month (" + str(job_count) + "/" + str(len(month)) + ").")
                 invalid_ids.append(job_id)
                 continue
@@ -223,7 +217,7 @@ def main():
     job_ids = request_comment("https://hacker-news.firebaseio.com/v0/item/",
                               [19055166, 19281834, 19543940, 19797594, 20083795, 20325925, 20584311, 20867123,
                                21126014, 21419536, 21683554, 21936440, 22225314], "kids")
-    if job_ids == "Invalid URL":
+    if job_ids == "Error retrieving comment or its data.":
         print("Error with URL - shutting down.")
         exit()
 

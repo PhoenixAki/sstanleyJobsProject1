@@ -6,7 +6,7 @@ def test_get_jobs_ids():
     good_result = Main.request_comment("https://hacker-news.firebaseio.com/v0/item/", [21936440], "kids")
     bad_result = Main.request_comment("http://obviously-bad-url-for-testing.json", [12345], "kids")
     assert len(good_result[0]) > 100
-    assert bad_result == "Invalid URL"
+    assert bad_result == "Error retrieving comment or its data."
 
 
 def test_table_create():
