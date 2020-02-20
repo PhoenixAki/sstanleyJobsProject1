@@ -126,7 +126,7 @@ def parse_listings(job_listings: list, cities: list):
         data.append(job[0])
 
         # Post Date: every post contains its date in unix time; convert to text date format
-        data.append(datetime.fromtimestamp(job[1]))
+        data.append(str(datetime.fromtimestamp(job[1])))
 
         # Title: assumes first word; not all are one word but this ensures retrieval of *some* data for every job entry
         data.append(job[2].lstrip().split(' ', 1)[0])  # gets the first word (stripped of whitespace)
@@ -196,8 +196,11 @@ def check_website(job: str):
 def write_db(cursor: sqlite3.Cursor, statement: str, values: list):
     """Writes data to the database and ensures that only good data goes in, and bad data gets rejected with
     an exception and error message."""
+    count = 0
     try:
         for value in values:
+            count += 1
+            print("Writing job " + str(count) + "/" + str(len(values)) + " to database.")
             cursor.execute(statement, value)
     except Exception as e:
         print("Exception: " + str(e))
@@ -236,11 +239,10 @@ def main():
 
     response = write_db(cursor, "INSERT INTO jobs(id, date, title, location, skills, visa, onsite, website, "
                                 "description) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", job_listings)
-    if response != "Error":
-        print("Wrote to database. Shutting down.")
-    else:
+    if response == "Error":
         print("Error writing to database. Shutting down.")
-        exit()
+    else:
+        print("Wrote to database. Shutting down.")
 
     close_db(conn)
 
