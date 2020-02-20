@@ -2,6 +2,7 @@ import sqlite3
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
+import pytz
 
 
 def open_city_file():
@@ -126,7 +127,7 @@ def parse_listings(job_listings: list, cities: list):
         data.append(job[0])
 
         # Post Date: every post contains its date in unix time; convert to text date format
-        data.append(str(datetime.fromtimestamp(job[1])))
+        data.append(datetime.fromtimestamp(job[1], pytz.utc).strftime("%m/%d/%Y, %H:%M:%S"))
 
         # Title: assumes first word; not all are one word but this ensures retrieval of *some* data for every job entry
         data.append(job[2].lstrip().split(' ', 1)[0])  # gets the first word (stripped of whitespace)

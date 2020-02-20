@@ -53,5 +53,5 @@ def test_parse_data():
 
     # dummy list of cities provided as opposed to opening the full file since this is a direct test
     parsed = Main.parse_listings([test_entry], ["Boston", "Detroit", "San Francisco", "Phoenix", "Denver"])
-    assert parsed[0][:-1] == [123, '1995-04-04 08:00:00', 'TestCompanyName', 'Detroit', 'Unknown Skills', 'Yes',
+    assert parsed[0][:-1] == [123, '04/04/1995, 12:00:00', 'TestCompanyName', 'Detroit', 'Unknown Skills', 'Yes',
                               'Remote and Onsite', 'https://test-website-name.com']
