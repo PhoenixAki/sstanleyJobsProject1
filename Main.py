@@ -119,8 +119,11 @@ def write_invalid_ids(invalid_ids: list):
 def parse_listings(job_listings: list, cities: list):
     """Parses each job for: ID, post date, title, location, skills, visa, remote/onsite, website, and description."""
     parsed = []  # list of lists, each entry here is a list of its parsed elements
+    count = 0
 
     for job in job_listings:
+        count += 1
+        print("Parsing job " + str(count) + "/" + str(len(job_listings)))
         data = list()
 
         # ID: job[0] always contains the ID of comment; referenced to avoid requesting jobs that are already in database
@@ -197,11 +200,8 @@ def check_website(job: str):
 def write_db(cursor: sqlite3.Cursor, statement: str, values: list):
     """Writes data to the database and ensures that only good data goes in, and bad data gets rejected with
     an exception and error message."""
-    count = 0
     try:
         for value in values:
-            count += 1
-            print("Writing job " + str(count) + "/" + str(len(values)) + " to database.")
             cursor.execute(statement, value)
     except Exception as e:
         print("Exception: " + str(e))
