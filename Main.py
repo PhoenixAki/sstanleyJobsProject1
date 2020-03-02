@@ -1,14 +1,9 @@
 import sqlite3
+from geotext import GeoText
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pytz
-
-
-def open_city_file():
-    """Opens the cities file and reads the contents into a list to be compared to with job comments."""
-    city_file = open("cities.txt")
-    return city_file.read().splitlines()
 
 
 def open_id_file():
@@ -116,7 +111,7 @@ def write_invalid_ids(invalid_ids: list):
     id_file.close()
 
 
-def parse_listings(job_listings: list, cities: list):
+def parse_listings(job_listings: list):
     """Parses each job for: ID, post date, title, location, skills, visa, remote/onsite, website, and description."""
     parsed = []  # list of lists, each entry here is a list of its parsed elements
     count = 0
@@ -136,7 +131,7 @@ def parse_listings(job_listings: list, cities: list):
         data.append(job[2].lstrip().split(' ', 1)[0])  # gets the first word (stripped of whitespace)
 
         # Location: check if any of the cities list exists in job comment
-        data.append(check_location(job[2], cities))
+        data.append(check_location(job[2]))
 
         # Skills TODO: not sure how to identify skills yet, fall back to a default value for now
         data.append("Unknown Skills")
@@ -170,12 +165,13 @@ def check_remote(job: str):
         return "Unknown Remote/Onsite"  # if not found
 
 
-def check_location(job: str, cities: list):
-    """Helper function for checking if the location of a job is listed in the city list retrieved from cities.txt."""
-    for city in cities:
-        if " " + city.lower() + " " in job.lower() or " " + city.lower() + ", " in job.lower():
-            return city
-    return "Unknown Location"  # if not found
+def check_location(job: str):
+    """Helper function for checking if the location of a job is listed, via GeoText library."""
+    locations = GeoText(job)
+    if len(locations.cities) > 0:
+        return locations.cities[0]  # assume first valid city is job location
+    else:
+        return "Unknown Location"  # if not found
 
 
 def check_visa(job: str):
@@ -210,7 +206,6 @@ def write_db(cursor: sqlite3.Cursor, statement: str, values: list):
 
 
 def main():
-    cities = open_city_file()
     bad_ids = open_id_file()
     conn, cursor = connect_db("jobs.db")
     table = "jobs(id INTEGER PRIMARY KEY, date TEXT, title TEXT, location TEXT, skills TEXT, visa TEXT, " \
@@ -235,7 +230,7 @@ def main():
 
     print("Retrieved new job postings from API.")
 
-    job_listings = parse_listings(job_listings, cities)
+    job_listings = parse_listings(job_listings)
     print("Parsed job postings.")
 
     response = write_db(cursor, "INSERT INTO jobs(id, date, title, location, skills, visa, onsite, website, "
