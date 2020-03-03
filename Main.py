@@ -114,6 +114,9 @@ def write_invalid_ids(invalid_ids: list):
 def parse_listings(job_listings: list):
     """Parses each job for: ID, post date, title, location, skills, visa, remote/onsite, website, and description."""
     parsed = []  # list of lists, each entry here is a list of its parsed elements
+    skills = ["java", "python", "c++", "c#", " c ", "go", "ruby", "web development", "html", "css",
+              "software engineer", "javascript", "sql", "react", "nodejs", "android", "ios", "swift",
+              "aws", "mongodb", "kotlin"]
     count = 0
 
     for job in job_listings:
@@ -133,8 +136,8 @@ def parse_listings(job_listings: list):
         # Location: check if any of the cities list exists in job comment
         data.append(check_location(job[2]))
 
-        # Skills TODO: not sure how to identify skills yet, fall back to a default value for now
-        data.append("Unknown Skills")
+        # Skills: check job for appearances of above list of possible skills
+        data.append(check_skills(job[2], skills))
 
         # Visa: check if the keyword 'visa' exists in job comment
         data.append(check_visa(job[2]))
@@ -172,6 +175,18 @@ def check_location(job: str):
         return locations.cities[0]  # assume first valid city is job location
     else:
         return "Unknown Location"  # if not found
+
+
+def check_skills(job: str, skills: list):
+    skill_list = ""
+    for skill in skills:
+        if skill in job.lower():
+            skill_list += skill + ", "
+
+    if skill_list == "":
+        return "Unknown Skills"
+    else:
+        return skill_list
 
 
 def check_visa(job: str):
