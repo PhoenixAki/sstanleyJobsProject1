@@ -49,9 +49,10 @@ def test_parse_data():
     test_entry = [123, 796996800, "TestCompanyName | Detroit | Visa Support | Remote + Onsite | "
                                   "<a href='https://test-website-name.com'> </a> | TestCompanyName is seeking "
                                   "programmers with at least 3 years experience in the industry for performing "
-                                  "PyTest commands on student's projects. Apply at the website above."]
+                                  "PyTest commands on student's projects. sql is also preferred. Apply at "
+                                  "the website above."]
 
     # dummy list of cities provided as opposed to opening the full file since this is a direct test
     parsed = Main.parse_listings([test_entry])
-    assert parsed[0][:-1] == [123, '04/04/1995, 12:00:00', 'TestCompanyName', 'Detroit', 'Unknown Skills', 'Yes',
+    assert parsed[0][:-1] == [123, '04/04/1995, 12:00:00', 'TestCompanyName', 'Detroit', 'sql, ', 'Yes',
                               'Remote and Onsite', 'https://test-website-name.com']
