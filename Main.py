@@ -1,5 +1,7 @@
 import sqlite3
+import time
 from geotext import GeoText
+from geopy import Nominatim
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
@@ -111,8 +113,9 @@ def write_invalid_ids(invalid_ids: list):
     id_file.close()
 
 
-def parse_listings(job_listings: list):
+def parse_listings(job_listings: list, cache_cursor=None):
     """Parses each job for: ID, post date, title, location, skills, visa, remote/onsite, website, and description."""
+    lookup = Nominatim(user_agent="sstanley_jobs_project")  # for geopy lookup of locations
     parsed = []  # list of lists, each entry here is a list of its parsed elements
     skills = ["java", "python", "c++", "c#", " c ", "go", "ruby", "web development", "html", "css",
               "software engineer", "javascript", "sql", "react", "nodejs", "android", "ios", "swift",
@@ -134,7 +137,7 @@ def parse_listings(job_listings: list):
         data.append(job[2].lstrip().split(' ', 1)[0])  # gets the first word (stripped of whitespace)
 
         # Location: check if any of the cities list exists in job comment
-        data.append(check_location(job[2]))
+        data.append(check_location(job[2], cache_cursor, lookup))
 
         # Skills: check job for appearances of above list of possible skills
         data.append(check_skills(job[2], skills))
@@ -168,20 +171,43 @@ def check_remote(job: str):
         return "Unknown Remote/Onsite"  # if not found
 
 
-def check_location(job: str):
+def check_location(job: str, cache_cursor, nom: Nominatim):
     """Helper function for checking if the location of a job is listed, via GeoText library."""
-    locations = GeoText(job)
-    if len(locations.cities) > 0:
-        return locations.cities[0]  # assume first valid city is job location
+    # Pull city names with GeoText
+    response = GeoText(job)
+    if len(response.cities) > 0:
+        location = response.cities[0]  # assume first valid city is job location
     else:
         return "Unknown Location"  # if not found
+
+    if cache_cursor is None:  # cache_cursor is None if coming from test_main
+        return location
+
+    # Cross-check with cache and look up coordinates with Geopy if needed
+    cache = cache_cursor.execute("SELECT * FROM cache WHERE name='" + location + "';").fetchall()
+
+    if len(cache) == 1:  # if in cache, use that information
+        print(location + " is in cache, using its coordinates.")
+        return str(cache[0][0]) + "," + str(cache[0][1]) + "," + str(cache[0][2])  # name, latitude, longitude
+    else:  # if not in cache, lookup with Nominatim
+        print(location + " is not in cache, using Nominatim.")
+        time.sleep(1)
+        lookup = nom.geocode(location, exactly_one=True)  # only get first result
+        if lookup is None:  # could not find location
+            return "Unknown Location"
+        else:  # found location
+            print("Found " + location + " via Nominatim, using its coordinates.")
+            values = [location, lookup.latitude, lookup.longitude]
+            write_db(cache_cursor, "INSERT INTO cache(name, latitude, longitude) VALUES(?, ?, ?);", [values])
+            print("Wrote " + location + " to cache database.")
+            return location + "," + str(lookup.latitude) + "," + str(lookup.longitude)
 
 
 def check_skills(job: str, skills: list):
     skill_list = ""
     for skill in skills:
         if skill in job.lower():
-            skill_list += skill + ", "
+            skill_list += skill + ","
 
     if skill_list == "":
         return "Unknown Skills"
@@ -222,11 +248,16 @@ def write_db(cursor: sqlite3.Cursor, statement: str, values: list):
 
 def main():
     bad_ids = open_id_file()
-    conn, cursor = connect_db("jobs.db")
-    table = "jobs(id INTEGER PRIMARY KEY, date TEXT, title TEXT, location TEXT, skills TEXT, visa TEXT, " \
-            "onsite TEXT, website TEXT, description TEXT)"
-    setup_db(cursor, table)
-    print("Connected to database.")
+    jobs_conn, jobs_cursor = connect_db("jobs.db")
+    jobs_table = "jobs(id INTEGER PRIMARY KEY, date TEXT, title TEXT, location TEXT, skills TEXT, visa TEXT, " \
+                 "onsite TEXT, website TEXT, description TEXT)"
+    setup_db(jobs_cursor, jobs_table)
+    print("Connected to and setup jobs database.")
+
+    cache_conn, cache_cursor = connect_db("cache.db")
+    cache_table = "cache(name TEXT PRIMARY KEY, latitude REAL, longitude REAL)"
+    setup_db(cache_cursor, cache_table)
+    print("Connected to and setup cache database.")
 
     job_ids = request_comment("https://hacker-news.firebaseio.com/v0/item/",
                               [19055166, 19281834, 19543940, 19797594, 20083795, 20325925, 20584311, 20867123,
@@ -237,7 +268,7 @@ def main():
 
     print("Retrieved job IDs from API.")
 
-    job_ids = check_ids(cursor, job_ids, bad_ids)
+    job_ids = check_ids(jobs_cursor, job_ids, bad_ids)
     job_listings = get_listings(job_ids)
     if len(job_listings) == 0:
         print("No new jobs to add to database. Shutting down.")
@@ -245,17 +276,18 @@ def main():
 
     print("Retrieved new job postings from API.")
 
-    job_listings = parse_listings(job_listings)
+    job_listings = parse_listings(job_listings, cache_cursor)
     print("Parsed job postings.")
 
-    response = write_db(cursor, "INSERT INTO jobs(id, date, title, location, skills, visa, onsite, website, "
-                                "description) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", job_listings)
+    response = write_db(jobs_cursor, "INSERT INTO jobs(id, date, title, location, skills, visa, onsite, website, "
+                                     "description) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", job_listings)
     if response == "Error":
         print("Error writing to database. Shutting down.")
     else:
         print("Wrote to database. Shutting down.")
 
-    close_db(conn)
+    close_db(jobs_conn)
+    close_db(cache_conn)
 
 
 if __name__ == "__main__":

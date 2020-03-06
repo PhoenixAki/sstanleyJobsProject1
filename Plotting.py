@@ -72,11 +72,11 @@ def setup_map(jobs: list):
         lats.append(loc[1])
         longs.append(loc[2])
 
-    map = go.Scattermapbox(lat=lats, lon=longs, hovertext=text, hoverinfo='text',
-                           marker=dict(symbol='marker', size=15, color='blue'))
+    mapbox = go.Scattermapbox(lat=lats, lon=longs, hovertext=text, hoverinfo='text',
+                              marker=dict(symbol='marker', size=15, color='blue'))
     layout = go.Layout(title_text='Job Postings', title_x=0.5, width=1600, height=800,
                        mapbox=dict(center=dict(lat=42, lon=-71.5), accesstoken=mapboxtoken, zoom=6, style='light'))
-    fig = go.Figure(data=[map], layout=layout)
+    fig = go.Figure(data=[mapbox], layout=layout)
 
     return fig
 
