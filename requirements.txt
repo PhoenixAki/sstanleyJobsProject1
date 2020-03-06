@@ -4,3 +4,4 @@ pytz
 geotext
 plotly
 dash
+geopy
