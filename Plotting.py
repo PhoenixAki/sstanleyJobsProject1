@@ -1,6 +1,7 @@
 import Main
 from datetime import datetime
 import dash
+import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input, State
@@ -13,8 +14,9 @@ app.title = "Job Postings (Feb 2019 - Feb 2020)"
 app.layout = html.Div([
     html.Div([
         # Map
-        dcc.Graph(id="Job Map")
-        ], className='map'
+        dcc.Graph(
+            id="job-map",
+        )], className='map'
     ),
 
     html.Div([
@@ -50,7 +52,7 @@ app.layout = html.Div([
 
     html.Div([
         # Skills Filter
-        html.Label("Skills Filter (show jobs by recommeded skills): "),
+        html.Label("Skills Filter (show jobs by recommended skills): "),
         dcc.Input(id="skills-input", value="", type="text"),
         html.Button(id='skills-button', n_clicks=0, children='submit skills filter')
         ], className='skills-input'
@@ -58,51 +60,100 @@ app.layout = html.Div([
 
     html.Div([
         # Title Filter
-        html.Label("Company Filter (show jobs by filter): "),
+        html.Label("Company Filter (show jobs by company name): "),
         dcc.Input(id="title-input", value="", type="text"),
         html.Button(id='title-button', n_clicks=0, children='submit title filter')
         ], className='title-input'
+    ),
+
+    html.Div([
+        # Job Information Table
+        html.H3("JOB DETAILS (click a location to list all jobs there):"),
+        dash_table.DataTable(
+            id='data-table',
+            columns=[
+                {"name": "City", "id": "city"},
+                {"name": "Post Date", "id": "post-date"},
+                {"name": "Title", "id": "title"},
+                {"name": "Skills", "id": "skills"},
+                {"name": "Visa Sponsorship", "id": "visa"},
+                {"name": "Onsite/Remote", "id": "onsite"},
+                {"name": "Website", "id": "website"}
+            ],
+            style_table={"width": "1500px"}
+        )], className='data-table'
     )
 ])
 
 
-@app.callback(Output('Job Map', 'figure'),
+# Graph Click Event Callback
+@app.callback(Output('data-table', 'data'), [Input('job-map', 'clickData')])
+def update_table(click_data: dict):
+    if click_data is None:
+        return [{}]
+    else:
+        return get_job_details(click_data)
+
+
+def get_job_details(click_data):
+    city = click_data.get("points")[0].get("hovertext")
+    print(click_data)
+    conn, cursor = Main.connect_db("jobs.db")
+    jobs = cursor.execute("SELECT * FROM jobs WHERE location LIKE '%" + city + "%';").fetchall()
+    table_data = []
+
+    for job in jobs:
+        table_data.append(
+            {"city": job[3].split(',')[0],
+             "post-date": job[1],
+             "title": job[2],
+             "skills": job[4][:-1],
+             "visa": job[5],
+             "onsite": job[6],
+             "website": job[7]
+             }
+        )
+
+    Main.close_db(conn)
+    return table_data
+
+
+# Filter Callback
+@app.callback(Output('job-map', 'figure'),
               [Input('skills-button', 'n_clicks'), Input('title-button', 'n_clicks'),
                Input('onsite-button', 'n_clicks'), Input('date-button', 'n_clicks')],
               [State('skills-input', 'value'), State('title-input', 'value'),
                State('onsite-dropdown', 'value'), State('date-input', 'start_date'), State('date-input', 'end_date')]
               )
-def filter_trigger(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks, skills_value, title_value,
-                   onsite_value, start_date, end_date):
+def update_graph(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks, skills_value, title_value,
+                 onsite_value, start_date, end_date):
     trigger = dash.callback_context.triggered[0]['prop_id'].split(',')[0]
     if trigger == "title-button.n_clicks":
-        print("Title Input Selected")
-        return db_exec("title", title_value)
+        jobs = db_exec("title", title_value)
     elif trigger == "skills-button.n_clicks":
-        print("Skills Input Selected")
-        return db_exec('skills', skills_value)
+        jobs = db_exec('skills', skills_value)
     elif trigger == "date-button.n_clicks":
-        print("Date Input Selected")
-        return db_exec("date", [start_date, end_date])
+        jobs = db_exec("date", [start_date, end_date])
     elif trigger == "onsite-button.n_clicks":
-        print("Onsite Input Selected")
-        return db_exec("onsite", onsite_value)
+        jobs = db_exec("onsite", onsite_value)
+    else:
+        print("Error in filter callback function.")
+        return
+
+    return setup_map(jobs)
 
 
 def db_exec(column: str, input_value):
     conn, cursor = Main.connect_db("jobs.db")
 
     if column == "date" and input_value[0] is not None and input_value[1] is not None:
-        jobs = calc_date(cursor, input_value)
+        return calc_date(cursor, input_value)
     elif input_value != "" and (column == "title" or column == "skills"):
-        jobs = cursor.execute("SELECT * FROM jobs WHERE " + column + " LIKE '%" + input_value + "%';").fetchall()
+        return cursor.execute("SELECT * FROM jobs WHERE " + column + " LIKE '%" + input_value + "%';").fetchall()
     elif column == "onsite" and input_value is not None:
-        jobs = cursor.execute("SELECT * FROM jobs WHERE onsite='" + input_value + "';").fetchall()
+        return cursor.execute("SELECT * FROM jobs WHERE onsite='" + input_value + "';").fetchall()
     else:
-        jobs = cursor.execute("SELECT * FROM jobs;").fetchall()
-
-    Main.close_db(conn)
-    return setup_map(jobs)
+        return cursor.execute("SELECT * FROM jobs;").fetchall()
 
 
 def calc_date(cursor, dates: list):

@@ -116,7 +116,7 @@ def write_invalid_ids(invalid_ids: list):
 def parse_listings(job_listings: list, cache_cursor=None):
     """Parses each job for: ID, post date, title, location, skills, visa, remote/onsite, website, and description."""
     lookup = Nominatim(user_agent="sstanley_jobs_project")  # for geopy lookup of locations
-    parsed = []  # list of lists, each entry here is a list of its parsed elements
+    parsed = []  # contains list of jobs with parsed elements
     skills = ["java", "python", "c++", "c#", " c ", "go", "ruby", "web development", "html", "css",
               "software engineer", "javascript", "sql", "react", "nodejs", "android", "ios", "swift",
               "aws", "mongodb", "kotlin"]
@@ -188,7 +188,7 @@ def check_location(job: str, cache_cursor, nom: Nominatim):
 
     if len(cache) == 1:  # if in cache, use that information
         print(location + " is in cache, using its coordinates.")
-        return str(cache[0][0]) + "," + str(cache[0][1]) + "," + str(cache[0][2])  # name, latitude, longitude
+        return str(cache[0][0]) + ", " + str(cache[0][1]) + ", " + str(cache[0][2])  # name, latitude, longitude
     else:  # if not in cache, lookup with Nominatim
         print(location + " is not in cache, using Nominatim.")
         time.sleep(1)
@@ -207,7 +207,7 @@ def check_skills(job: str, skills: list):
     skill_list = ""
     for skill in skills:
         if skill in job.lower():
-            skill_list += skill + ","
+            skill_list += skill + ", "
 
     if skill_list == "":
         return "Unknown Skills"
