@@ -18,38 +18,8 @@ app.layout = html.Div([
     ),
 
     html.Div([
-        # Skills Filter
-        html.Label("Enter skills to filter jobs by: "),
-        dcc.Input(id="skills-input", value="", type="text"),
-        html.Button(id='skills-button', n_clicks=0, children='submit')
-        ], className='skills-input'
-    ),
-
-    html.Div([
-        # Title Filter
-        html.Label("Enter a company name to filter jobs by: "),
-        dcc.Input(id="title-input", value="", type="text"),
-        html.Button(id='title-button', n_clicks=0, children='submit')
-        ], className='title-input'
-    ),
-
-    html.Div([
-        # Date Range Filter
-        html.Label("Select a date range to display jobs from:"),
-        dcc.DatePickerRange(
-            id='date-input',
-            min_date_allowed=datetime(2019, 2, 1),
-            max_date_allowed=datetime(2020, 2, 29),
-            initial_visible_month=datetime(2020, 2, 1),
-            end_date=datetime(2020, 2, 29)
-        ),
-        html.Button(id='date-button', n_clicks=0, children='submit')
-        ], className='date-input'
-    ),
-
-    html.Div([
         # Onsite/Remote Filter
-        html.Label("Display jobs with Remote, Onsite, or Both available?"),
+        html.Label("Onsite Filter (show only jobs that are remote, onsite, or both):"),
         dcc.Dropdown(
             id='onsite-dropdown',
             options=[
@@ -60,8 +30,38 @@ app.layout = html.Div([
             style={'width': '500px'},
             searchable=False,
         ),
-        html.Button(id='onsite-button', n_clicks=0, children='submit')
+        html.Button(id='onsite-button', n_clicks=0, children='submit onsite filter')
         ], className='onsite-dropdown'
+    ),
+
+    html.Div([
+        # Date Range Filter
+        html.Label("Date Filter (show jobs posted in a specific date range):"),
+        dcc.DatePickerRange(
+            id='date-input',
+            min_date_allowed=datetime(2019, 2, 1),
+            max_date_allowed=datetime(2020, 2, 29),
+            initial_visible_month=datetime(2020, 2, 1),
+            end_date=datetime(2020, 2, 29)
+        ),
+        html.Button(id='date-button', n_clicks=0, children='submit date filter')
+        ], className='date-input'
+    ),
+
+    html.Div([
+        # Skills Filter
+        html.Label("Skills Filter (show jobs by recommeded skills): "),
+        dcc.Input(id="skills-input", value="", type="text"),
+        html.Button(id='skills-button', n_clicks=0, children='submit skills filter')
+        ], className='skills-input'
+    ),
+
+    html.Div([
+        # Title Filter
+        html.Label("Company Filter (show jobs by filter): "),
+        dcc.Input(id="title-input", value="", type="text"),
+        html.Button(id='title-button', n_clicks=0, children='submit title filter')
+        ], className='title-input'
     )
 ])
 
@@ -72,7 +72,8 @@ app.layout = html.Div([
               [State('skills-input', 'value'), State('title-input', 'value'),
                State('onsite-dropdown', 'value'), State('date-input', 'start_date'), State('date-input', 'end_date')]
               )
-def filter_trigger(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks, skills_value, title_value, onsite_value, start_date, end_date):
+def filter_trigger(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks, skills_value, title_value,
+                   onsite_value, start_date, end_date):
     trigger = dash.callback_context.triggered[0]['prop_id'].split(',')[0]
     if trigger == "title-button.n_clicks":
         print("Title Input Selected")
