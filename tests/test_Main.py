@@ -65,8 +65,8 @@ def test_parse_data():
 
     # dummy list of cities provided as opposed to opening the full file since this is a direct test
     parsed = Main.parse_listings([test_entry])
-    assert parsed[0][:-1] == [123, '04/04/1995, 12:00:00', 'TestCompanyName', 'Detroit', 'sql, ', 'Yes',
-                              'Remote and Onsite', 'https://test-website-name.com']
+    assert parsed[0][:-1] == [123, '04/04/1995, 12:00:00', 'TestCompanyName', 'Detroit', 'SQL', 'Yes',
+                              'Both', 'https://test-website-name.com']
 
 
 def test_job_details():
@@ -74,7 +74,7 @@ def test_job_details():
     updating in real time on a web browser page, this is tested by ensuring proper data is pulled
     from a sample city (Braintree)."""
 
-    # dummy click_data simulating a real response from the webpage
+    # dummy click_data simulating a real response from the web page
     click_data = {'points': [{'curveNumber': 0, 'pointNumber': 3894, 'pointIndex': 3894, 'lon': '-71.005067',
                               'lat': '42.2064195', 'hovertext': 'Braintree'}]}
     table_data = Plotting.get_job_details(click_data)[0]  # test first result
@@ -86,7 +86,7 @@ def test_job_details():
     assert job_data[1] == table_data.get('post-date')  # post date
     assert job_data[2] == table_data.get('title')  # title
     assert job_data[3].split(',')[0] == table_data.get('city')  # location (split to get just city name)
-    assert job_data[4][:-1] == table_data.get('skills')  # skills (minus last index, formatting mismatch)
+    assert job_data[4] == table_data.get('skills')  # skills
     assert job_data[5] == table_data.get('visa')  # visa
     assert job_data[6] == table_data.get('onsite')  # onsite
     assert job_data[7] == table_data.get('website')  # website

@@ -27,7 +27,7 @@ app.layout = html.Div([
             options=[
                 {'label': 'Onsite', 'value': 'Onsite'},
                 {'label': 'Remote', 'value': 'Remote'},
-                {'label': 'Both', 'value': 'Remote and Onsite'}
+                {'label': 'Both', 'value': 'Both'}
             ],
             style={'width': '500px'},
             searchable=False,
@@ -80,7 +80,8 @@ app.layout = html.Div([
                 {"name": "Onsite/Remote", "id": "onsite"},
                 {"name": "Website", "id": "website"}
             ],
-            style_table={"width": "1500px"}
+            style_table={"width": "1500px"},
+            sort_action='native'
         )], className='data-table'
     )
 ])
@@ -97,7 +98,6 @@ def update_table(click_data: dict):
 
 def get_job_details(click_data):
     city = click_data.get("points")[0].get("hovertext")
-    print(click_data)
     conn, cursor = Main.connect_db("jobs.db")
     jobs = cursor.execute("SELECT * FROM jobs WHERE location LIKE '%" + city + "%';").fetchall()
     table_data = []
@@ -107,7 +107,7 @@ def get_job_details(click_data):
             {"city": job[3].split(',')[0],
              "post-date": job[1],
              "title": job[2],
-             "skills": job[4][:-1],
+             "skills": job[4],
              "visa": job[5],
              "onsite": job[6],
              "website": job[7]
