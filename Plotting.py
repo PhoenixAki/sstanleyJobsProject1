@@ -90,6 +90,7 @@ app.layout = html.Div([
 # Graph Click Event Callback
 @app.callback(Output('data-table', 'data'), [Input('job-map', 'clickData')])
 def update_table(click_data: dict):
+    """Callback function that updates the Datatable element with a list of jobs retrieved from get_job_details."""
     if click_data is None:
         return [{}]
     else:
@@ -97,6 +98,8 @@ def update_table(click_data: dict):
 
 
 def get_job_details(click_data):
+    """Parses click_data for a city name and pulls jobs from the database that are in that city. Those jobs
+    are then appended into a list of dictionaries to be fed into the datatable rows."""
     city = click_data.get("points")[0].get("hovertext")
     conn, cursor = Main.connect_db("jobs.db")
     jobs = cursor.execute("SELECT * FROM jobs WHERE location LIKE '%" + city + "%';").fetchall()
@@ -127,6 +130,8 @@ def get_job_details(click_data):
               )
 def update_graph(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks, skills_value, title_value,
                  onsite_value, start_date, end_date):
+    """Callback function that updates the graph based on filters. This function determines which filter
+    triggered the callback, and passes appropriate information to db_exec for further handling."""
     trigger = dash.callback_context.triggered[0]['prop_id'].split(',')[0]
     if trigger == "title-button.n_clicks":
         jobs = db_exec("title", title_value)
@@ -144,6 +149,8 @@ def update_graph(skills_n_clicks, title_n_clicks, onsite_n_clicks, date_n_clicks
 
 
 def db_exec(column: str, input_value):
+    """Takes in a column name and filter value and forms the correct SQL statement based on those. The resulting
+    list of jobs is returned (or sent for further parsing, if date filter)."""
     conn, cursor = Main.connect_db("jobs.db")
 
     if column == "date" and input_value[0] is not None and input_value[1] is not None:
@@ -157,6 +164,7 @@ def db_exec(column: str, input_value):
 
 
 def calc_date(cursor, dates: list):
+    """Takes in a start and end date for a range and returns a list of jobs that are in that range."""
     start = datetime.strptime(dates[0], "%Y-%m-%d")
     end = datetime.strptime(dates[1], "%Y-%m-%d")
     all_jobs = cursor.execute("SELECT * FROM jobs;").fetchall()
@@ -171,6 +179,7 @@ def calc_date(cursor, dates: list):
 
 
 def setup_map(jobs: list):
+    """Takes in a filtered list of jobs and re-forms the map visualization with their data."""
     lats = []
     longs = []
     text = []
