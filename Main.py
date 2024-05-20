@@ -143,7 +143,7 @@ def parse_listings(job_listings: list, cursor=None):
             # Website: uses BeautifulSoup to parse any <a href='https://website-name.com'> tags from job comment
             check_website(job[2]),
 
-            # Description: insert the full job comment (stripped of HTML tags for cleanliness sake)
+            # Description: insert the full job comment (stripped of HTML tags for cleanliness’s sake)
             BeautifulSoup(job[2], 'html.parser').get_text()
         ])
 
@@ -232,7 +232,7 @@ def write_db(cursor: sqlite3.Cursor, statement: str, values: list):
     """Writes data to the given database and ensures that only good data goes in, and bad data gets rejected."""
     try:
         for value in values:
-            if type(value) == int:
+            if isinstance(value, int):
                 value = [value]
             cursor.execute(statement, value)
     except Exception as e:
