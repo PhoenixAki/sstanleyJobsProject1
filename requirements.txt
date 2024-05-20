@@ -1,5 +1,5 @@
 beautifulsoup4==4.8.2
-requests==2.23.0
+requests==2.31.0
 pytz==2019.3
 geotext==0.4.0
 plotly==4.5.1
