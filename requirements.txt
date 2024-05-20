@@ -1,7 +1,9 @@
-beautifulsoup4
-requests
-pytz
-geotext
-plotly
-dash
-geopy
+beautifulsoup4==4.8.2
+requests==2.23.0
+pytz==2019.3
+geotext==0.4.0
+plotly==4.5.1
+geopy==1.21.0
+werkzeug==2.0.3
+dash==1.9.0
+flask==2.1.3

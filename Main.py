@@ -151,7 +151,7 @@ def parse_listings(job_listings: list, cursor=None):
 
 
 def check_remote(job: str):
-    """Helper function for checking whether or not a job supports remote or onsite working (or both)."""
+    """Helper function for checking whether a job supports remote or onsite working (or both)."""
     if "remote" in job and "onsite" in job:
         return "Both"
     elif "remote" in job:
@@ -183,7 +183,7 @@ def check_location(job: str, cursor: sqlite3.Cursor, nom: Nominatim):
         return ', '.join(values)  # comma separated string of name, latitude, and longitude
     else:  # if not in cache, lookup with Geopy
         print(location + " is not in cache, using Nominatim.")
-        time.sleep(1)  # 1 second delay to follow Nominatim's TOS
+        time.sleep(1)  # 1-second delay to follow Nominatim's TOS
         lookup = nom.geocode(location, exactly_one=True)  # only pull first result
 
         if lookup is None:

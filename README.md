@@ -1,7 +1,5 @@
-# Name: Sean Stanley
-
 ## Dependencies:
-- Python 3.7
+- Python 3.7 (I used 3.7.9)
 - BeautifulSoup (beautifulsoup4 package in pycharm)
 - requests (library for requesting data from APIs)
 - datetime (for reading job posting dates)
