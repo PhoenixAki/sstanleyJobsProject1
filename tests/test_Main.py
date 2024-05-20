@@ -77,7 +77,7 @@ def test_job_details():
     # dummy click_data simulating a real response from the web page
     click_data = {'points': [{'curveNumber': 0, 'pointNumber': 3894, 'pointIndex': 3894, 'lon': '-71.005067',
                               'lat': '42.2064195', 'hovertext': 'Braintree'}]}
-    table_data = Plotting.get_job_details(click_data)[0]  # test first result
+    table_data = Plotting.get_job_details(click_data)[0]  # test first result for simplicity
 
     # pull first entry from database to compare
     conn, cursor = Main.connect_db("jobs.db")
@@ -93,14 +93,19 @@ def test_job_details():
 
 
 def test_filters():
-    """Tests that applying a filter will return the correct number of jobs. Because the database is not going to change
-    with more jobs in the future, it is safe to compare with numbers directly."""
+    """Tests that applying a filter (going through db_exec in Plotting.py) returns the correct number of jobs."""
     microsoft_filter = Plotting.db_exec("title", "microsoft")
     java_filter = Plotting.db_exec("skills", "java")
     onsite_filter = Plotting.db_exec("onsite", "Onsite")
     date_filter = Plotting.db_exec("date", ["2020-01-02", "2020-01-03"])
 
-    assert len(microsoft_filter) == 11
-    assert len(java_filter) == 1979
-    assert len(onsite_filter) == 4971
-    assert len(date_filter) == 323
+    conn, cursor = Main.connect_db("jobs.db")
+    microsoft_jobs = cursor.execute("SELECT * FROM jobs WHERE title LIKE '%Microsoft%';").fetchall()
+    java_jobs = cursor.execute("SELECT * FROM jobs WHERE skills LIKE '%Java%';").fetchall()
+    onsite_jobs = cursor.execute("SELECT * FROM jobs WHERE onsite='Onsite';").fetchall()
+    date_jobs = Plotting.calc_date(cursor, ["2020-01-02", "2020-01-03"])
+
+    assert len(microsoft_filter) == len(microsoft_jobs)
+    assert len(java_filter) == len(java_jobs)
+    assert len(onsite_filter) == len(onsite_jobs)
+    assert len(date_filter) == len(date_jobs)
